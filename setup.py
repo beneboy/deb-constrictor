@@ -36,6 +36,7 @@ setup(
     long_description=readme,
     author='Ben Shaw',
     author_email='ben@bbit.co.nz',
+    url='https://github.com/beneboy/deb-constrictor',
     packages=packages,
     package_data={'': ['LICENSE']},
     package_dir={'constrictor': 'constrictor'},
