@@ -10,6 +10,7 @@ from helpers import md5_for_path
 
 MAINTAINER_SCRIPT_NAMES = ('preinst', 'postinst', 'prerm', 'postrm')
 TAR_INFO_KEYS = ('uname', 'gname', 'uid', 'gid', 'mode')
+DEBIAN_BINARY_VERSION = '2.0'
 
 
 class DPKGControl(object):
@@ -69,8 +70,6 @@ def generate_directories(path, existing_dirs=None):
 
 
 class DPKGBuilder(object):
-    debian_binary_version = '2.0'
-
     def __init__(self, output_directory, project_name, version, architecture, data_dirs, links, depends=None,
                  maintainer_scripts=None, output_name=None):
         self.output_directory = os.path.expanduser(output_directory)
@@ -219,9 +218,9 @@ class DPKGBuilder(object):
 
         ar_writer = ARWriter(pkg_path)
 
-        ar_writer.archive_text("debian-binary", "{}\n".format(self.debian_binary_version), time.time(), 0, 0, 0644)
-        ar_writer.archive_file(control_archive_path, time.time(), 0, 0, 0644)
-        ar_writer.archive_file(data_archive_path, time.time(), 0, 0, 0644)
+        ar_writer.archive_text("debian-binary", "{}\n".format(DEBIAN_BINARY_VERSION), int(time.time()), 0, 0, 0644)
+        ar_writer.archive_file(control_archive_path, int(time.time()), 0, 0, 0644)
+        ar_writer.archive_file(data_archive_path, int(time.time()), 0, 0, 0644)
         ar_writer.close()
 
     def build_package(self):
