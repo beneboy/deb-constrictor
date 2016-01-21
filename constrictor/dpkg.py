@@ -223,10 +223,12 @@ class DPKGBuilder(object):
         ar_writer.archive_file(data_archive_path, int(time.time()), 0, 0, 0644)
         ar_writer.close()
 
+        return pkg_path
+
     def build_package(self):
         file_size_bytes, file_md5s = self.build_data_archive()
         control = DPKGControl(self.project_name, self.version, self.architecture, depends=self.depends,
                               installed_size_bytes=file_size_bytes)
         self.build_control_archive(control, file_md5s, self.maintainer_scripts)
 
-        self.assemble_deb_archive(self.control_archive_path, self.data_archive_path)
+        return self.assemble_deb_archive(self.control_archive_path, self.data_archive_path)
