@@ -114,6 +114,13 @@ class DPKGBuilder(object):
         for tar_info_key in TAR_INFO_KEYS:
             if dir_conf.get(tar_info_key) is not None:
                 setattr(tar_info, tar_info_key, dir_conf[tar_info_key])
+
+        if 'uid' in dir_conf and 'uname' not in dir_conf:
+            tar_info.uname = ''
+
+        if 'gid' in dir_conf and 'gname' not in dir_conf:
+            tar_info.gname = ''
+
         return tar_info
 
     @property
