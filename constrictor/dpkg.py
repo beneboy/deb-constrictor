@@ -203,7 +203,7 @@ class DPKGBuilder(object):
 
         control_tar = tarfile.open(self.control_archive_path, 'w:gz')
 
-        for script_name, script_path in maintainer_scripts:
+        for script_name, script_path in maintainer_scripts.iteritems():
             control_tar.add(script_path, arcname=script_name, filter=self.filter_maintainer_script_tar_info)
 
         control_text = control_data.get_control_text()
