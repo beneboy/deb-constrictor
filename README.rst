@@ -54,6 +54,6 @@ Output file is named in the format *<packagename>_<version>_<architecture>.deb* 
 Known Issues
 ------------
 
-- Lintian will complain about missing control file fields due to those having the ability to be created (yet). For example copyright, changelog, extend-description, maintainer. Packages still install OK without these.
+- Lintian will complain about missing control file fields due to those not having the ability to be created (yet). For example copyright, changelog, extend-description, maintainer. Packages still install OK without these.
 - Can't mark files as "config"
 - As with any tar based archive, ownership of files based on uname/gname can be wrong if the user does not exist. Use with caution or create postinst scripts to fix.
