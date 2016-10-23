@@ -2,7 +2,7 @@ import os
 import os.path
 
 
-from helpers import READ_BUFFER_SIZE
+from .helpers import READ_BUFFER_SIZE
 
 AR_HEADER_TEXT = "!<arch>\n"
 

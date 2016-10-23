@@ -1,16 +1,18 @@
 import os
 import os.path
-import StringIO
+from io import BytesIO
 import tarfile
 import tempfile
 import time
 
-from ar import ARWriter
-from helpers import md5_for_path
+from .ar import ARWriter
+from .helpers import md5_for_path
 
 MAINTAINER_SCRIPT_NAMES = ('preinst', 'postinst', 'prerm', 'postrm')
 TAR_INFO_KEYS = ('uname', 'gname', 'uid', 'gid', 'mode')
 DEBIAN_BINARY_VERSION = '2.0'
+TAR_DEFAULT_MODE = 0o755
+AR_DEFAULT_MODE = 0o644
 
 
 class DPKGControl(object):
@@ -47,7 +49,7 @@ class DPKGControl(object):
 
 
 def should_skip_file(file_name):
-    if file_name in ('.DS_Store', ):
+    if file_name in ('.DS_Store',):
         return True
 
     if file_name.endswith('.pyc'):
@@ -103,7 +105,7 @@ class DPKGBuilder(object):
             dir_ti.type = tarfile.DIRTYPE
             dir_ti.name = directory
             dir_ti.mtime = int(time.time())
-            dir_ti.mode = 0755
+            dir_ti.mode = TAR_DEFAULT_MODE
             self.filter_tar_info(dir_ti, dir_conf)
             archive.addfile(dir_ti)
 
@@ -177,7 +179,7 @@ class DPKGBuilder(object):
 
     @staticmethod
     def build_member_from_string(name, content):
-        content_file = StringIO.StringIO(content)
+        content_file = BytesIO(content)
         member = tarfile.TarInfo()
         member.type = tarfile.REGTYPE
         member.name = name
@@ -197,7 +199,7 @@ class DPKGBuilder(object):
     def filter_maintainer_script_tar_info(tar_info):
         tar_info.uid = 0
         tar_info.gid = 0
-        tar_info.mode = 0755
+        tar_info.mode = TAR_DEFAULT_MODE
         return tar_info
 
     @property
@@ -210,13 +212,13 @@ class DPKGBuilder(object):
 
         control_tar = tarfile.open(self.control_archive_path, 'w:gz')
 
-        for script_name, script_path in maintainer_scripts.iteritems():
+        for script_name, script_path in maintainer_scripts.items():
             control_tar.add(script_path, arcname=script_name, filter=self.filter_maintainer_script_tar_info)
 
-        control_text = control_data.get_control_text()
+        control_text = bytearray(control_data.get_control_text(), 'utf8')
         control_tar.addfile(*self.build_member_from_string('./control', control_text))
 
-        md5sum_text = '\n'.join(['  '.join(md5_file_pair) for md5_file_pair in file_md5s]) + '\n'
+        md5sum_text = bytearray('\n'.join(['  '.join(md5_file_pair) for md5_file_pair in file_md5s]) + '\n', 'ascii')
         control_tar.addfile(*self.build_member_from_string('./md5sums', md5sum_text))
         control_tar.close()
 
@@ -225,9 +227,10 @@ class DPKGBuilder(object):
 
         ar_writer = ARWriter(pkg_path)
 
-        ar_writer.archive_text("debian-binary", "{}\n".format(DEBIAN_BINARY_VERSION), int(time.time()), 0, 0, 0644)
-        ar_writer.archive_file(control_archive_path, int(time.time()), 0, 0, 0644)
-        ar_writer.archive_file(data_archive_path, int(time.time()), 0, 0, 0644)
+        ar_writer.archive_text("debian-binary", "{}\n".format(DEBIAN_BINARY_VERSION), int(time.time()), 0, 0,
+                               AR_DEFAULT_MODE)
+        ar_writer.archive_file(control_archive_path, int(time.time()), 0, 0, AR_DEFAULT_MODE)
+        ar_writer.archive_file(data_archive_path, int(time.time()), 0, 0, AR_DEFAULT_MODE)
         ar_writer.close()
 
         return pkg_path
