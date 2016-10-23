@@ -76,7 +76,7 @@ class DPKGBuilder(object):
         self.project_name = project_name
         self.version = version
         self.architecture = architecture
-        self.data_dirs = data_dirs
+        self.data_dirs = data_dirs or []
         self.links = links or {}
         self.depends = depends
         self.maintainer_scripts = maintainer_scripts

@@ -19,7 +19,6 @@ packages = [
 
 requires = []
 
-version = ''
 with open('constrictor/__init__.py', 'r') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
@@ -39,6 +38,7 @@ setup(
     url='https://github.com/beneboy/deb-constrictor',
     packages=packages,
     package_data={'': ['LICENSE']},
+    scripts=['bin/constrictor-build'],
     package_dir={'constrictor': 'constrictor'},
     include_package_data=True,
     install_requires=requires,
