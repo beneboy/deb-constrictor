@@ -29,7 +29,7 @@ def main():
 
     if "-p" in args:
         print_output_path = True
-        args.pop("-p")
+        args.remove("-p")
     else:
         print_output_path = False
 

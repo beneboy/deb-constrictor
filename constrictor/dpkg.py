@@ -215,11 +215,11 @@ class DPKGBuilder(object):
         for script_name, script_path in maintainer_scripts.items():
             control_tar.add(script_path, arcname=script_name, filter=self.filter_maintainer_script_tar_info)
 
-        control_text = bytearray(control_data.get_control_text(), 'utf8')
-        control_tar.addfile(*self.build_member_from_string('./control', control_text))
+        control_text = control_data.get_control_text()
+        control_tar.addfile(*self.build_member_from_string('./control', control_text.encode()))
 
-        md5sum_text = bytearray('\n'.join(['  '.join(md5_file_pair) for md5_file_pair in file_md5s]) + '\n', 'ascii')
-        control_tar.addfile(*self.build_member_from_string('./md5sums', md5sum_text))
+        md5sum_text = '\n'.join(['  '.join(md5_file_pair) for md5_file_pair in file_md5s]) + '\n'
+        control_tar.addfile(*self.build_member_from_string('./md5sums', md5sum_text.encode()))
         control_tar.close()
 
     def assemble_deb_archive(self, control_archive_path, data_archive_path):
