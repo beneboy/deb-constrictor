@@ -15,7 +15,7 @@ def build_package(build_config_path, print_output_path):
     output_directory = './build'
 
     d = DPKGBuilder(output_directory, config['project_name'], config["version"], config["architecture"],
-                    config.get("directories"), config.get("links"), config.get("depends"),
+                    config["maintainer"], config.get("directories"), config.get("links"), config.get("depends"),
                     config.get("maintainer_scripts"))
 
     output_path = d.build_package()

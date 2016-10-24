@@ -6,6 +6,7 @@ import tempfile
 import time
 
 from .ar import ARWriter
+from .control import DPKGControlOld as DPKGControl
 from .helpers import md5_for_path
 
 MAINTAINER_SCRIPT_NAMES = ('preinst', 'postinst', 'prerm', 'postrm')
@@ -13,39 +14,6 @@ TAR_INFO_KEYS = ('uname', 'gname', 'uid', 'gid', 'mode')
 DEBIAN_BINARY_VERSION = '2.0'
 TAR_DEFAULT_MODE = 0o755
 AR_DEFAULT_MODE = 0o644
-
-
-class DPKGControl(object):
-    # some sensible defaults which could be overridden
-    priority = "optional"
-
-    def __init__(self, package_name, version, architecture, section=None, description=None,
-                 depends=None, installed_size_bytes=None):
-        self.package_name = package_name
-        self.version = version
-        self.architecture = architecture
-        self.section = section
-        self.description = description
-        self.depends = depends
-        self.installed_size_bytes = installed_size_bytes
-
-    def get_control_text(self):
-        control_text = ""
-        control_text += "Package: {}\n".format(self.package_name)
-        control_text += "Source: {}\n".format(self.package_name)
-        control_text += "Version: {}\n".format(self.version)
-        control_text += "Architecture: {}\n".format(self.architecture)
-        control_text += "Priority: {}\n".format(self.priority)
-        if self.depends:
-            depends_str = ', '.join(self.depends)
-            control_text += "Depends: {}\n".format(depends_str)
-
-        control_text += "Provides: {}\n".format(self.package_name)
-        if self.installed_size_bytes is not None:
-            control_text += "Installed-Size: {}\n".format(self.installed_size_bytes / 1024)
-        control_text += "Description: {}\n".format(self.description or self.package_name)
-
-        return control_text
 
 
 def should_skip_file(file_name):
@@ -72,12 +40,13 @@ def generate_directories(path, existing_dirs=None):
 
 
 class DPKGBuilder(object):
-    def __init__(self, output_directory, project_name, version, architecture, data_dirs, links, depends=None,
-                 maintainer_scripts=None, output_name=None):
+    def __init__(self, output_directory, project_name, version, architecture, maintainer, data_dirs, links,
+                 depends=None, maintainer_scripts=None, output_name=None):
         self.output_directory = os.path.expanduser(output_directory)
         self.project_name = project_name
         self.version = version
         self.architecture = architecture
+        self.maintainer = maintainer
         self.data_dirs = data_dirs or []
         self.links = links or {}
         self.depends = depends
@@ -237,7 +206,7 @@ class DPKGBuilder(object):
 
     def build_package(self):
         file_size_bytes, file_md5s = self.build_data_archive()
-        control = DPKGControl(self.project_name, self.version, self.architecture, depends=self.depends,
+        control = DPKGControl(self.project_name, self.version, self.architecture, self.maintainer, depends=self.depends,
                               installed_size_bytes=file_size_bytes)
         self.build_control_archive(control, file_md5s, self.maintainer_scripts)
 
