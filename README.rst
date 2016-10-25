@@ -75,11 +75,11 @@ It loads the following fields and expects them to be in the same format as above
 - links (array of dictionaries as per example above, optiona)
 - maintainer_scripts (dictionary as per example above, optiona)
 
-You can also provide a _parent_ field, which is a path to another build JSON file (path is relative to the config file) from which to read config values. For example, you might want to define the maintainer only in a parent config rather than in each child config.
+You can also provide a "parent" field, which is a path to another build JSON file (path is relative to the config file) from which to read config values. For example, you might want to define the maintainer only in a parent config rather than in each child config.
 
-Child values will replace parent values. _extra_control_fields_ is not replaced as a whole, but the items in the child _extra_control_fields_ will override those of the parents (i.e. they are merged with child items have precedence).
+Child values will replace parent values. "extra_control_fields" is not replaced as a whole, but the items in the child "extra_control_fields" will override those of the parents (i.e. they are merged with child items have precedence).
 
-The _parent_ lookup is recursive so a parent can have a parent, and so on.
+The parent lookup is recursive so a parent can have a parent, and so on.
 
 
 Known Issues
