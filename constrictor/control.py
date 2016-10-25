@@ -114,40 +114,12 @@ class BinaryControl(object):
 
         return "\n".join(control_lines)
 
+    def is_field_defined(self, field_name):
+        return field_name in self._control_fields
 
-class DPKGControlOld(object):
-    # some sensible defaults which could be overridden
-    priority = "optional"
+    def get_default_output_name(self):
+        package = self._control_fields[FIELD_PACKAGE]
+        version = self._control_fields[FIELD_VERSION]
+        architecture = self._control_fields[FIELD_ARCHITECTURE]
 
-    def __init__(self, package_name, version, architecture, maintainer, section=None, description=None,
-                 depends=None, installed_size_bytes=None):
-        self.package_name = package_name
-        self.version = version
-        self.architecture = architecture
-        self.maintainer = maintainer
-        self.section = section
-        self.description = description
-        self.depends = depends
-        self.installed_size_bytes = installed_size_bytes
-
-    def get_control_text(self):
-        control_text = ""
-        control_text += "Package: {}\n".format(self.package_name)
-        control_text += "Source: {}\n".format(self.package_name)
-        control_text += "Maintainer: {}\n".format(self.maintainer)
-        control_text += "Version: {}\n".format(self.version)
-        control_text += "Architecture: {}\n".format(self.architecture)
-        control_text += "Priority: {}\n".format(self.priority)
-        if self.depends:
-            depends_str = ', '.join(self.depends)
-            control_text += "Depends: {}\n".format(depends_str)
-
-        control_text += "Provides: {}\n".format(self.package_name)
-        if self.installed_size_bytes is not None:
-            control_text += "Installed-Size: {}\n".format(self.installed_size_bytes / 1024)
-        control_text += "Description: {}\n".format(self.description or self.package_name)
-
-        if self.section:
-            control_text += "Section: {}\n".format(self.section)
-
-        return control_text
+        return '{}_{}_{}.deb'.format(package, version, architecture)

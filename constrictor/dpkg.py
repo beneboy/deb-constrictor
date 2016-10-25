@@ -6,7 +6,7 @@ import tempfile
 import time
 
 from .ar import ARWriter
-from .control import DPKGControlOld as DPKGControl
+from .control import FIELD_INSTALLED_SIZE
 from .helpers import md5_for_path
 
 MAINTAINER_SCRIPT_NAMES = ('preinst', 'postinst', 'prerm', 'postrm')
@@ -40,20 +40,15 @@ def generate_directories(path, existing_dirs=None):
 
 
 class DPKGBuilder(object):
-    def __init__(self, output_directory, project_name, version, architecture, maintainer, data_dirs, links,
-                 depends=None, maintainer_scripts=None, output_name=None):
+    def __init__(self, output_directory, control, data_dirs, links, maintainer_scripts=None, output_name=None):
         self.output_directory = os.path.expanduser(output_directory)
-        self.project_name = project_name
-        self.version = version
-        self.architecture = architecture
-        self.maintainer = maintainer
         self.data_dirs = data_dirs or []
         self.links = links or {}
-        self.depends = depends
         self.maintainer_scripts = maintainer_scripts
         self.seen_data_dirs = set()
         self.working_dir = tempfile.mkdtemp()
-        self.output_name = output_name or '{}_{}_{}.deb'.format(self.project_name, self.version, self.architecture)
+        self.control = control
+        self.output_name = output_name or control.get_default_output_name()
 
     @staticmethod
     def list_data_dir(source_dir, dest_dir):
@@ -175,7 +170,7 @@ class DPKGBuilder(object):
     def control_archive_path(self):
         return os.path.join(self.working_dir, 'control.tar.gz')
 
-    def build_control_archive(self, control_data, file_md5s, maintainer_scripts):
+    def build_control_archive(self, control_text, file_md5s, maintainer_scripts):
         maintainer_scripts = maintainer_scripts or {}
         self.validate_maintainer_scripts(maintainer_scripts)
 
@@ -184,7 +179,6 @@ class DPKGBuilder(object):
         for script_name, script_path in maintainer_scripts.items():
             control_tar.add(script_path, arcname=script_name, filter=self.filter_maintainer_script_tar_info)
 
-        control_text = control_data.get_control_text()
         control_tar.addfile(*self.build_member_from_string('./control', control_text.encode()))
 
         md5sum_text = '\n'.join(['  '.join(md5_file_pair) for md5_file_pair in file_md5s]) + '\n'
@@ -206,8 +200,10 @@ class DPKGBuilder(object):
 
     def build_package(self):
         file_size_bytes, file_md5s = self.build_data_archive()
-        control = DPKGControl(self.project_name, self.version, self.architecture, self.maintainer, depends=self.depends,
-                              installed_size_bytes=file_size_bytes)
-        self.build_control_archive(control, file_md5s, self.maintainer_scripts)
+
+        if not self.control.is_field_defined(FIELD_INSTALLED_SIZE):
+            self.control.installed_size_bytes = file_size_bytes
+
+        self.build_control_archive(self.control.get_control_text(), file_md5s, self.maintainer_scripts)
 
         return self.assemble_deb_archive(self.control_archive_path, self.data_archive_path)

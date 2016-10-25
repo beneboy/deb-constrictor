@@ -16,7 +16,7 @@ Usage
 
 Define directories, links, scripts and dependencies::
 
-    from constrictor import DPKGBuilder
+    from constrictor import DPKGBuilder, BinaryControl
 
     dirs = [
         {
@@ -46,14 +46,46 @@ Define directories, links, scripts and dependencies::
 
     output_directory = '~/build'
 
-    d = DPKGBuilder(output_directory, 'bbit-web-frontend', '1.5', 'all', dirs, links, maintainer_scripts)
+    c = BinaryControl('bbit-web-frontend',  '1.5', 'all', 'Ben Shaw', 'BBIT Web Frontend')
+
+    c.set_control_field('Depends', depends)
+
+    c.set_control_fields({'Section': 'misc', 'Priority': 'optional'})
+
+    d = DPKGBuilder(output_directory, c, dirs, links, maintainer_scripts)
     d.build_package()
 
 Output file is named in the format *<packagename>_<version>_<architecture>.deb* and placed in the *destination_dir*. Alternatively, provide a name for your package as the *output_name* argument, and the package will be created with this name in the *output_directory*.
 
+
+constrictor-build tool
+----------------------
+
+constrictor-build is a command line tool that will build a package based on information in a JSON file. By default, this file is in the current directory and called "build-config.json".
+
+It loads the following fields and expects them to be in the same format as above:
+
+- package (string, required)
+- version  (string, required)
+- architecture (string, required)
+- maintainer (string, required)
+- description (string, required)
+- extra_control_fields (dictionary of standard DPKG control field pairs, optiona)
+- directories (array of dictionaries as per example above, optiona)
+- links (array of dictionaries as per example above, optiona)
+- maintainer_scripts (dictionary as per example above, optiona)
+
+You can also provide a _parent_ field, which is a path to another build JSON file (path is relative to the config file) from which to read config values. For example, you might want to define the maintainer only in a parent config rather than in each child config.
+
+Child values will replace parent values. _extra_control_fields_ is not replaced as a whole, but the items in the child _extra_control_fields_ will override those of the parents (i.e. they are merged with child items have precedence).
+
+The _parent_ lookup is recursive so a parent can have a parent, and so on.
+
+
 Known Issues
 ------------
 
-- Lintian will complain about missing control file fields due to those not having the ability to be created (yet). For example copyright, changelog, extend-description, maintainer. Packages still install OK without these.
+- Can only make Binary packages
+- Lintian will complain about missing control file fields due to those not having the ability to be created (yet). For example copyright, changelog, extended-description. Packages still install OK without these.
 - Can't mark files as "config"
 - As with any tar based archive, ownership of files based on uname/gname can be wrong if the user does not exist. Use with caution or create postinst scripts to fix.

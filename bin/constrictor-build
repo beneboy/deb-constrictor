@@ -1,21 +1,25 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import json
 from sys import argv
-from constrictor import DPKGBuilder
+from constrictor.dpkg import DPKGBuilder
+from constrictor.control import BinaryControl
+from constrictor.configreader import ConfigReader
 
 DEFAULT_CONFIG_PATH = "./build-config.json"
 
 
 def build_package(build_config_path, print_output_path):
-    with open(build_config_path) as config_fp:
-        config = json.load(config_fp)
+    config = ConfigReader(build_config_path).load_config_file(build_config_path)
 
     output_directory = './build'
 
-    d = DPKGBuilder(output_directory, config['project_name'], config["version"], config["architecture"],
-                    config["maintainer"], config.get("directories"), config.get("links"), config.get("depends"),
+    control = BinaryControl(config['package'], config["version"], config["architecture"], config["maintainer"],
+                            config["description"])
+
+    control.set_control_fields(config.get('extra_control_fields', {}))
+
+    d = DPKGBuilder(output_directory, control, config.get("directories"), config.get("links"),
                     config.get("maintainer_scripts"))
 
     output_path = d.build_package()
