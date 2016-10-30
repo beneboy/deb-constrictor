@@ -112,7 +112,7 @@ class BinaryControl(object):
 
             control_lines.append(self.get_control_line(field_name))
 
-        return "\n".join(control_lines)
+        return "\n".join(control_lines) + "\n"
 
     def is_field_defined(self, field_name):
         return field_name in self._control_fields

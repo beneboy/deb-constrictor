@@ -24,7 +24,7 @@ class TestBinaryControl(unittest.TestCase):
 
     def test_generate_control_text_with_required_only(self):
         expected_text = "Package: test-package\nVersion: 1.0.5\nArchitecture: amd64\nMaintainer: Johnny Coder\n" \
-                        "Description: This is a test package for fun."
+                        "Description: This is a test package for fun.\n"
 
         self.assertEqual(self.control.get_control_text(), expected_text)
 
