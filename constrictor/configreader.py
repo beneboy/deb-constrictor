@@ -38,12 +38,6 @@ class ConfigReader(object):
         t = Template(value)
         return t.substitute(environ)
 
-    @staticmethod
-    def other_parse_environment_variable_value(value):
-        env_keys = [i[1] for i in Formatter().parse(value)]
-        t = Template(value)
-        return t.substitute({k: v for k, v in environ.items() if k in env_keys})
-
     def interpolate_environment_variables_in_list(self, value_list):
         for index, value in enumerate(value_list):
             if isinstance(value, dict):
