@@ -70,10 +70,10 @@ It loads the following fields and expects them to be in the same format as above
 - architecture (string, required)
 - maintainer (string, required)
 - description (string, required)
-- extra_control_fields (dictionary of standard DPKG control field pairs, optiona)
-- directories (array of dictionaries as per example above, optiona)
-- links (array of dictionaries as per example above, optiona)
-- maintainer_scripts (dictionary as per example above, optiona)
+- extra_control_fields (dictionary of standard DPKG control field pairs, optional)
+- directories (array of dictionaries as per example above, optional)
+- links (array of dictionaries as per example above, optional)
+- maintainer_scripts (dictionary as per example above, optional)
 
 You can also provide a "parent" field, which is a path to another build JSON file (path is relative to the config file) from which to read config values. For example, you might want to define the maintainer only in a parent config rather than in each child config.
 
@@ -81,6 +81,7 @@ Child values will replace parent values. "extra_control_fields" is not replaced 
 
 The parent lookup is recursive so a parent can have a parent, and so on.
 
+Environment variables in the form ${var_name} or $var_name will be substituted.
 
 Known Issues
 ------------
