@@ -1,0 +1,33 @@
+// JSON doesn't allow comments, so these are some very invalid lines :)
+// this will package up a virtual environment, to live in /var/virtualenvs/, and include links to libraries that aren't
+// picked up automatically when the venv is moved. to be used in conjunction with build-venv-and-package.sh
+
+
+{
+  "parent": "parent-config.json",
+  "package": "${VENV_NAME}",
+  "architecture": "amd64",
+  "version": "${VENV_VERSION}",
+  "description": "The example virtual environment.",
+  "extra_control_fields": {
+    "Depends": [
+      "python3.5"
+    ]
+  },
+  "directories": [
+    {
+      "source": "${VENV_DIR}",
+      "destination": "/var/virtualenvs/${VENV_NAME}"
+    }
+  ],
+  "links": [
+    {
+      "source": "/var/virtualenvs/${VENV_NAME}/lib/python${PYTHON_VERSION}/encodings",
+      "destination": "/usr/lib/python${PYTHON_VERSION}/encodings"
+    },
+    {
+      "source": "/var/virtualenvs/${VENV_NAME}/lib/python${PYTHON_VERSION}/lib-dynload",
+      "destination": "/usr/lib/python${PYTHON_VERSION}/lib-dynload"
+    }
+  ]
+}

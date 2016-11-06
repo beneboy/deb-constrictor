@@ -83,6 +83,8 @@ The parent lookup is recursive so a parent can have a parent, and so on.
 
 Environment variables in the form ${var_name} or $var_name will be substituted.
 
+Examples of configuration files and how you might use constrictor-build in conjunction with other build steps are included in the [examples directory](examples/).
+
 Known Issues
 ------------
 

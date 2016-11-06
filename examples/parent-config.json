@@ -1,0 +1,11 @@
+// JSON doesn't allow comments, so these are some very invalid lines :)
+// Example of a parent configuration that stores some fields that are common among the projects. Any of these fields
+// can be overridden in child configurations
+
+{
+  "maintainer": "Dr. P. Kg <dpkg@example.com>",
+  "extra_control_fields": {
+    "Section": "misc",
+    "Priority": "optional"
+  }
+}

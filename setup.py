@@ -44,12 +44,12 @@ setup(
     install_requires=requires,
     license='BSD 3-Clause',
     zip_safe=True,
-    classifiers=(
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'License :: OSI Approved :: BSD License',
+    classifiers=[
+        #'Development Status :: 4 - Beta',
+        #'Intended Audience :: Developers',
+        #'Natural Language :: English',
+        #'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-    )
+        #'Programming Language :: Python :: 2.7',
+    ]
 )
