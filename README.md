@@ -7,7 +7,7 @@ Build Debian Packages (.deb/DPKGs) natively in Python. No dependencies on Java, 
 Install
 -------
 
-Using pip::
+Using pip:
 
     pip install deb-constrictor
 
@@ -16,7 +16,8 @@ Usage
 
 Define directories, links, scripts and dependencies:
 
-`
+
+```
 from constrictor import DPKGBuilder, BinaryControl
 
 dirs = [
@@ -55,7 +56,7 @@ c.set_control_fields({'Section': 'misc', 'Priority': 'optional'})
 
 d = DPKGBuilder(output_directory, c, dirs, links, maintainer_scripts)
 d.build_package()
-`
+```
 
 Output file is named in the format *<packagename>_<version>_<architecture>.deb* and placed in the *destination_dir*.
 Alternatively, provide a name for your package as the *output_name* argument, and the package will be created with this
@@ -104,29 +105,29 @@ included twice in the computer configuration,
 
 For example, a parent with this configuration:
 
-`
+```
 "extra_control_fields": {
     "Depends": ["some-package"]
 }
-`
+```
 
 Could be overridden with a child with this configuration:
 
-`
+```
 "extra_control_fields": {
     "Depends": ["some-other-package"],
     "Provides": ["this-package"]
 }
-`
+```
 
 Creating a computed configuration like this:
 
-`
+```
 "extra_control_fields": {
     "Depends": ["some-package", "some-other-package"],
     "Provides": ["this-package"]
 }
-`
+```
 
 ### deb_constrictor  ##
 
