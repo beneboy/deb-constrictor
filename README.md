@@ -1,6 +1,5 @@
-===============
-deb-constrictor
-===============
+# deb-constrictor
+
 
 Build Debian Packages (.deb/DPKGs) natively in Python. No dependencies on Java, Ruby or other Debian packages.
 
