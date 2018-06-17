@@ -16,7 +16,7 @@ Usage
 Define directories, links, scripts and dependencies:
 
 
-```
+```python
 from constrictor import DPKGBuilder, BinaryControl
 
 dirs = [
@@ -104,7 +104,7 @@ included twice in the computer configuration,
 
 For example, a parent with this configuration:
 
-```
+```json
 "extra_control_fields": {
     "Depends": ["some-package"]
 }
@@ -112,7 +112,7 @@ For example, a parent with this configuration:
 
 Could be overridden with a child with this configuration:
 
-```
+```json
 "extra_control_fields": {
     "Depends": ["some-other-package"],
     "Provides": ["this-package"]
@@ -121,7 +121,7 @@ Could be overridden with a child with this configuration:
 
 Creating a computed configuration like this:
 
-```
+```json
 "extra_control_fields": {
     "Depends": ["some-package", "some-other-package"],
     "Provides": ["this-package"]
