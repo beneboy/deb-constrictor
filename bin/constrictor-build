@@ -10,7 +10,7 @@ DEFAULT_CONFIG_PATH = "./build-config.json"
 
 
 def build_package(build_config_path, print_output_path):
-    config = ConfigReader(build_config_path).load_config_file(build_config_path)
+    config = ConfigReader(build_config_path).get_configuration()
 
     output_directory = './build'
 
@@ -19,8 +19,10 @@ def build_package(build_config_path, print_output_path):
 
     control.set_control_fields(config.get('extra_control_fields', {}))
 
+    deb_constrictor_options = config.get('deb_constrictor', {})
+
     d = DPKGBuilder(output_directory, control, config.get("directories"), config.get("links"),
-                    config.get("maintainer_scripts"))
+                    config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get('ignore_paths'))
 
     output_path = d.build_package()
 

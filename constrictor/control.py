@@ -1,3 +1,5 @@
+import math
+
 FIELD_BUILT_USING = "Built-Using"
 FIELD_HOMEPAGE = "Homepage"
 FIELD_DESCRIPTION = "Description"
@@ -90,7 +92,7 @@ class BinaryControl(object):
         if self.installed_size_bytes is None:
             return None
 
-        return '{}: {}'.format(FIELD_INSTALLED_SIZE, self.installed_size_bytes / 1024)
+        return '{}: {}'.format(FIELD_INSTALLED_SIZE, math.ceil(self.installed_size_bytes / 1024.0))
 
     def get_control_text(self):
         control_lines = []

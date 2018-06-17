@@ -1,7 +1,6 @@
 import os
 import os.path
 
-
 from .helpers import READ_BUFFER_SIZE
 
 AR_HEADER_TEXT = "!<arch>\n"
@@ -76,6 +75,9 @@ class ARWriter(object):
         file_size = len(text)
         self._write_file_header(file_name, mod_time, uid, gid, mode, file_size)
         self._write_text(text)
+
+        if file_size % 2 != 0:
+            self._write_file_alignment()
 
     def close(self):
         self.fp.close()

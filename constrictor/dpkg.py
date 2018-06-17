@@ -1,5 +1,6 @@
 import os
-import os.path
+import fnmatch
+from functools import partial
 from io import BytesIO
 import tarfile
 import tempfile
@@ -11,36 +12,33 @@ from .helpers import md5_for_path
 
 MAINTAINER_SCRIPT_NAMES = ('preinst', 'postinst', 'prerm', 'postrm')
 TAR_INFO_KEYS = ('uname', 'gname', 'uid', 'gid', 'mode')
+FORCE_DIRECTORY_INCLUSION_FILENAMES = (".debkeep", ".gitkeep")
 DEBIAN_BINARY_VERSION = '2.0'
 TAR_DEFAULT_MODE = 0o755
 AR_DEFAULT_MODE = 0o644
 
 
-def should_skip_file(file_name):
-    if file_name in ('.DS_Store',):
-        return True
-
-    if file_name.endswith('.pyc'):
-        return True
-
-    return False
-
-
 def generate_directories(path, existing_dirs=None):
+    """Recursively build a list of directories inside a path."""
     existing_dirs = existing_dirs or []
-    dirname = os.path.dirname(path)
+    directory_name = os.path.dirname(path)
 
-    if dirname == '.':
+    if directory_name == '.':
         return
 
-    existing_dirs.append(dirname)
-    generate_directories(dirname, existing_dirs)
+    existing_dirs.append(directory_name)
+    generate_directories(directory_name, existing_dirs)
 
     return existing_dirs
 
 
 class DPKGBuilder(object):
-    def __init__(self, output_directory, control, data_dirs, links, maintainer_scripts=None, output_name=None):
+    """
+    Finds files to use, builds tar archive and then archives into ar format. Builds + includes debian control files.
+    """
+
+    def __init__(self, output_directory, control, data_dirs, links, maintainer_scripts=None, output_name=None,
+                 ignore_paths=None):
         self.output_directory = os.path.expanduser(output_directory)
         self.data_dirs = data_dirs or []
         self.links = links or {}
@@ -49,16 +47,26 @@ class DPKGBuilder(object):
         self.working_dir = tempfile.mkdtemp()
         self.control = control
         self.output_name = output_name or control.get_default_output_name()
+        self.ignore_paths = ignore_paths or []
 
-    @staticmethod
-    def list_data_dir(source_dir, dest_dir):
+    def should_skip_path(self, path):
+        return any(map(partial(fnmatch.fnmatch, path), self.ignore_paths))
+
+    def list_data_dir(self, source_dir):
+        """
+        Iterator to recursively list all files in a directory that should be included. Returns a tuple of absolute
+        file_path (on local) and the relative path (relative to source).
+        If the file name matches a filename to skip (should_skip_file returns true) it will not be returned.
+        """
         for root_dir, dirs, files in os.walk(source_dir):
             for file_name in files:
-                if should_skip_file(file_name):
-                    continue
                 file_path = os.path.join(root_dir, file_name)
                 relative_path = file_path[len(source_dir):]
-                yield dest_dir, file_path, relative_path
+
+                if self.should_skip_path(relative_path):
+                    continue
+
+                yield file_path, relative_path
 
     def add_directory_root_to_archive(self, archive, dir_conf, file_path):
         for directory in reversed(generate_directories(file_path)):
@@ -70,7 +78,7 @@ class DPKGBuilder(object):
             dir_ti.name = directory
             dir_ti.mtime = int(time.time())
             dir_ti.mode = TAR_DEFAULT_MODE
-            self.filter_tar_info(dir_ti, dir_conf)
+            dir_ti = self.filter_tar_info(dir_ti, dir_conf)
             archive.addfile(dir_ti)
 
             self.seen_data_dirs.add(directory)
@@ -102,18 +110,29 @@ class DPKGBuilder(object):
 
         for dir_conf in self.data_dirs:
             source_dir = os.path.expanduser(dir_conf['source'])
-            for dest_path_root, source_file_path, source_file_name in self.list_data_dir(source_dir,
-                                                                                         dir_conf['destination']):
+
+            for source_file_path, source_file_name in self.list_data_dir(source_dir):
                 if source_file_name.startswith('/'):
                     source_file_name = source_file_name[1:]
-                archive_path = '.' + os.path.join(dest_path_root, source_file_name)
+                archive_path = '.' + os.path.join(dir_conf['destination'], source_file_name)
 
-                self.add_directory_root_to_archive(data_tar_file, dir_conf, archive_path)
+                if os.path.islink(source_file_path) and not os.path.exists(source_file_path):
+                    # this is a link to a file that doesn't exist but should when we deploy if we are on the same OS
+                    # (e.g. venv build with docker and .deb assembled on host) so add it as a link
+                    self.links.append({
+                        'source': archive_path,
+                        'destination': os.readlink(source_file_path)
+                    })
+                else:
+                    self.add_directory_root_to_archive(data_tar_file, dir_conf, archive_path)
+                    if os.path.basename(source_file_name) in FORCE_DIRECTORY_INCLUSION_FILENAMES:
+                        continue
 
-                file_size_bytes += os.path.getsize(source_file_path)
-                file_md5s.append((md5_for_path(source_file_path), archive_path))
-                data_tar_file.add(source_file_path, arcname=archive_path, recursive=False,
-                                  filter=lambda ti: self.filter_tar_info(ti, dir_conf))
+                    file_size_bytes += os.path.getsize(source_file_path)
+
+                    file_md5s.append((md5_for_path(source_file_path), archive_path))
+                    data_tar_file.add(source_file_path, arcname=archive_path, recursive=False,
+                                      filter=lambda ti: self.filter_tar_info(ti, dir_conf))
 
         for symlink_conf in self.links:
             symlink_dest = symlink_conf['destination']

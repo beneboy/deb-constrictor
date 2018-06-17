@@ -1,42 +1,87 @@
 import json
+import os
 
-from os import environ
-from os.path import dirname, join
 from string import Template
 
-PARENT_PATH_KEY = "parent"
-EXTRA_CONTROL_FIELDS_KEY = "extra_control_fields"
+from constrictor.configuration import PARENT_KEY, ConstrictorConfiguration
 
-try:
-    basestring
+BASE_CONFIG_ENV_KEY = "CONSTRICTOR_BUILD_BASE_CONFIG_PATH"
+BASE_CONFIG_PATH_DEFAULT = "~/constrictor-build-config.json"
 
 
-    def is_str(s):
+def is_str(s):
+    try:
         return isinstance(s, basestring)
-except NameError:
-    def is_str(s):
+    except NameError:
         return isinstance(s, str)
 
 
+def resolve_base_config_path(base_config_path):
+    if base_config_path:
+        return base_config_path
+
+    if BASE_CONFIG_ENV_KEY in os.environ:
+        return os.environ[BASE_CONFIG_ENV_KEY]
+
+    return BASE_CONFIG_PATH_DEFAULT
+
+
 class ConfigReader(object):
-    def __init__(self, config_path):
+    def __init__(self, config_path, base_config_path=None):
         self.config_path = config_path
+        self.base_config_path = resolve_base_config_path(base_config_path)
 
     @staticmethod
     def read_json(path):
         with open(path) as config_fp:
             return json.load(config_fp)
 
+    def load_base_config(self):
+        if self.base_config_path and os.path.exists(self.base_config_path):
+            return self.read_json(self.base_config_path)
+
+        return {}
+
     def load_config_file(self, config_path):
+        """
+        Load a tuple of the (parent_config_path[str], config_data [dict]). parent_config_path will be None to indicate
+        this is the root config (however the base_config_path config will always be the root if set).
+        """
         config = self.read_json(config_path)
-        self.add_parent_config(config_path, config)
-        self.interpolate_environment_variables_in_dict(config)
-        return config
+        return config.get(PARENT_KEY), config
+
+    def get_configuration(self):
+        resolved_configuration = ConstrictorConfiguration(self.load_base_config())
+
+        configuration_list = []
+        seen_paths = []
+
+        current_config_path = self.config_path
+
+        while True:
+            if current_config_path in seen_paths:
+                raise RuntimeError("{} already loaded, possible recursive config parents.".format(current_config_path))
+
+            relative_parent_config_path, configuration = self.load_config_file(current_config_path)
+
+            configuration_list.insert(0, configuration)
+
+            if relative_parent_config_path is None:
+                break
+
+            seen_paths.append(current_config_path)
+
+            current_config_path = os.path.join(os.path.dirname(current_config_path), relative_parent_config_path)
+
+        for configuration in configuration_list:
+            resolved_configuration.update_configuration(configuration)
+
+        return resolved_configuration
 
     @staticmethod
     def parse_environment_variable_value(value):
         t = Template(value)
-        return t.substitute(environ)
+        return t.substitute(os.environ)
 
     def interpolate_environment_variables_in_list(self, value_list):
         for index, value in enumerate(value_list):
@@ -55,20 +100,3 @@ class ConfigReader(object):
                 self.interpolate_environment_variables_in_list(value)
             elif is_str(value):
                 value_dict[key] = self.parse_environment_variable_value(value)
-
-    def add_parent_config(self, current_config_path, config):
-        if PARENT_PATH_KEY in config:
-            parent_path = join(dirname(current_config_path), config[PARENT_PATH_KEY])
-            parent_config = self.read_json(current_config_path)
-            self.add_parent_config(parent_path, parent_config)
-
-            for key, value in parent_config.items():
-                if key == PARENT_PATH_KEY:
-                    continue
-
-                if key not in config:
-                    config[key] = value
-                elif key == EXTRA_CONTROL_FIELDS_KEY:
-                    for cf_key, cf_value in parent_config[key].items():
-                        if cf_key not in config[key]:
-                            config[key][cf_key] = cf_value
