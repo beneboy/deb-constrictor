@@ -105,26 +105,32 @@ included twice in the computer configuration,
 For example, a parent with this configuration:
 
 ```json
-"extra_control_fields": {
-    "Depends": ["some-package"]
+{
+  "extra_control_fields": {
+      "Depends": ["some-package"]
+  }
 }
 ```
 
 Could be overridden with a child with this configuration:
 
 ```json
-"extra_control_fields": {
-    "Depends": ["some-other-package"],
-    "Provides": ["this-package"]
+{
+  "extra_control_fields": {
+      "Depends": ["some-other-package"],
+      "Provides": ["this-package"]
+  }
 }
 ```
 
 Creating a computed configuration like this:
 
 ```json
-"extra_control_fields": {
-    "Depends": ["some-package", "some-other-package"],
-    "Provides": ["this-package"]
+{
+  "extra_control_fields": {
+      "Depends": ["some-package", "some-other-package"],
+      "Provides": ["this-package"]
+  }
 }
 ```
 

@@ -76,6 +76,9 @@ class ConfigReader(object):
         for configuration in configuration_list:
             resolved_configuration.update_configuration(configuration)
 
+        resolved_configuration.interpolate_variables()
+        resolved_configuration.interpolate_configuration_values()
+
         return resolved_configuration
 
     @staticmethod

@@ -7,22 +7,23 @@ from constrictor.control import BinaryControl
 from constrictor.configreader import ConfigReader
 
 DEFAULT_CONFIG_PATH = "./build-config.json"
+DEFAULT_OUTPUT_DIRECTORY = "./build"
 
 
 def build_package(build_config_path, print_output_path):
     config = ConfigReader(build_config_path).get_configuration()
 
-    output_directory = './build'
+    output_directory = DEFAULT_OUTPUT_DIRECTORY
 
-    control = BinaryControl(config['package'], config["version"], config["architecture"], config["maintainer"],
+    control = BinaryControl(config["package"], config["version"], config["architecture"], config["maintainer"],
                             config["description"])
 
-    control.set_control_fields(config.get('extra_control_fields', {}))
+    control.set_control_fields(config.get("extra_control_fields", {}))
 
-    deb_constrictor_options = config.get('deb_constrictor', {})
+    deb_constrictor_options = config.get("deb_constrictor", {})
 
     d = DPKGBuilder(output_directory, control, config.get("directories"), config.get("links"),
-                    config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get('ignore_paths'))
+                    config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get("ignore_paths"))
 
     output_path = d.build_package()
 
@@ -42,5 +43,5 @@ def main():
     build_package(args[1] if len(argv) > 1 else DEFAULT_CONFIG_PATH, print_output_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

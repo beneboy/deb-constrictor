@@ -1,8 +1,12 @@
 from functools import partial
+from os import environ
+from string import Template
 
 PARENT_KEY = "parent"
 DEB_CONSTRICTOR_KEY = "deb_constrictor"
 IGNORE_PATHS_KEY = "ignore_paths"
+VARIABLES_KEY = "variables"
+ENVIRONMENT_VARIABLES_KEY = "environment_variables"
 EXTRA_CONTROL_FIELDS_KEY = "extra_control_fields"
 DEPENDS_KEY = "Depends"
 PROVIDES_KEY = "Provides"
@@ -39,7 +43,35 @@ def directory_entries_equal(dir1, dir2):
 
 
 def directory_entries_not_equal(dir1, dir2):
+    """Negate directory_entries_equal function (for use when inverse is required in map()/filter() call)"""
     return not directory_entries_equal(dir1, dir2)
+
+
+def interpolate_value(v, context):
+    if isinstance(v, dict):
+        interpolate_dictionary(v, context)
+        return None
+    elif isinstance(v, list):
+        interpolate_list(v, context)
+        return None
+    else:
+        return Template(v).substitute(context)
+
+
+def interpolate_list(l, context):
+    """Walk through list and interpolate variables for each value."""
+    for i, v in enumerate(l):
+        interpolated = interpolate_value(v, context)
+        if interpolated is not None:
+            l[i] = interpolated
+
+
+def interpolate_dictionary(d, context):
+    """Walk through dictionary and interpolate variables for each value."""
+    for k, v in d.items():
+        interpolated = interpolate_value(v, context)
+        if interpolated is not None:
+            d[k] = interpolated
 
 
 class ConstrictorConfiguration(object):
@@ -50,6 +82,8 @@ class ConstrictorConfiguration(object):
 
     def __init__(self, base_configuration):
         self.configuration = {}
+        self.environment_variables = {}
+        self.variables = {}
         self.update_configuration(base_configuration)
 
     def update_configuration(self, configuration):
@@ -84,6 +118,8 @@ class ConstrictorConfiguration(object):
         for k, v in configuration.items():
             if k == IGNORE_PATHS_KEY:
                 self.update_ignore_paths(v)
+            elif k in (VARIABLES_KEY, ENVIRONMENT_VARIABLES_KEY):
+                self.update_variables(k, v)
             else:
                 self.configuration[DEB_CONSTRICTOR_KEY][k] = v
 
@@ -132,7 +168,6 @@ class ConstrictorConfiguration(object):
         (as there may be legitimate cases to source the same destination to multiple targets or multiple sources to the
         same target [if they contain different files] so if either differ to an existing entry it will be added).
         """
-
         if DIRECTORIES_KEY not in self.configuration:
             self.configuration[DIRECTORIES_KEY] = []
 
@@ -161,6 +196,59 @@ class ConstrictorConfiguration(object):
             self.configuration[MAINTAINER_SCRIPTS_KEY] = {}
 
         self.configuration[MAINTAINER_SCRIPTS_KEY].update(maintainer_scripts)
+
+    def update_variables(self, variables_key, new_variables):
+        """
+        Append the list of variables to the given variables_key. Does not do de-duplication of the variable name as it
+        might be good to have parent variables populate and the be able to be used in a child config.
+        """
+        if variables_key not in self.configuration[DEB_CONSTRICTOR_KEY]:
+            self.configuration[DEB_CONSTRICTOR_KEY][variables_key] = []
+
+        self.configuration[DEB_CONSTRICTOR_KEY][variables_key] += new_variables
+
+    def interpolate_variables(self):
+        """
+        Should be called before variables are used, when we have finished updating all configs down the hierarchy, to
+        interpolate the variables with variables before they can be used.
+        """
+        self.store_variable_list(ENVIRONMENT_VARIABLES_KEY, self.environment_variables)
+        self.store_variable_list(VARIABLES_KEY, self.variables)
+
+    def store_variable_list(self, variables_list_key, variables_container):
+        """
+        Interpolate each variable in the variables list (a list of lists, each item is [key, value]) and store it in the
+        dictionary for use later, i.e: [[k, v]] => {k: interpolate_value(v)}
+
+        Because the items are processed in order, items further along the list might be interpolated with variables set
+        by earlier elements.
+        """
+        for k, v in self.configuration[DEB_CONSTRICTOR_KEY].get(variables_list_key, []):
+            variables_container[k] = self.interpolate_value(v)
+
+    def get_template_context(self):
+        """
+        Template context (for interpolating variables) is os.environ, which is overridden by self.environment_variables
+        and then overridden by self.variables.
+
+        If you wanted to be more performant you would cache the ctx and invalidate it when the var variables change, but
+        I don't foresee this being an issue.
+        """
+        ctx = dict(environ)
+        ctx.update(self.environment_variables)
+        ctx.update(self.variables)
+        return ctx
+
+    def interpolate_value(self, value):
+        return interpolate_value(value, self.get_template_context())
+
+    def interpolate_configuration_values(self):
+        """
+        Recurse through the configuration and interpolate all the values with the template context. This should be
+        called after all the configurations have been loaded (parent hierarchy resolved and updated) and then
+        interpolate_variables called.
+        """
+        interpolate_dictionary(self.configuration, self.get_template_context())
 
     def __getitem__(self, item):
         return self.configuration[item]
