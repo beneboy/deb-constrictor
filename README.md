@@ -139,7 +139,8 @@ Creating a computed configuration like this:
 Provide a dictionary of metadata to configure build options such as file exclusion, pre/post build actions or variables.
 Valid keys are:
 * ignore_paths (list of strings, optional)
-
+* environment_variables (list of two-element lists, optional)
+* variables (list of two-element lists, optional)
 
 #### ignore_paths ###
 
@@ -164,6 +165,61 @@ the archive at all. This might not be desirable if you want an empty directory t
 The solution to this is to add a placeholder file in the directory that would otherwise be ignored - it should be called
 either `.gitkeep` or `.depkeep`. If this file is found its containing directory will be added to the archive (as it is
 not empty) however the placeholder file will not be included.
+
+#### environment_variables, variables ###
+
+A list of two-element lists in the format [key, value]; this format is used instead of a dictionary to preserve order so
+that values may depend on values that have been defined earlier.
+
+`environment_variables` and `variables` both behave in the same way in that any values they define can be used to 
+interpolate variables throughout the configuration, however if calling external scripts (e.g. pre/post build scripts)
+then only `environment_variables` will be passed to the sub-process.
+
+Here's an example using variables.
+
+```json
+{
+  "package": "${VENV_NAME}",
+  "deb_constrictor": {
+    "variables": [
+      ["BUILD_DIR", "build"]
+    ],
+      "environment_variables": [
+        ["PYTHON_VERSION", "3.6"],
+        ["VENV_NAME", "example-virtualenv"],
+        ["VENV_DIR", "${BUILD_DIR}/${VENV_NAME}"],
+        ["VENV_BIN_DIR", "${VENV_DIR}/bin"]
+      ]
+  },
+  "directories": [
+    {
+      "source": "${BUILD_DIR}/virtualenvs/${VENV_NAME}",
+      "destination": "/var/virtualenvs/${VENV_NAME}"
+    }
+  ]
+}
+```
+
+After the variables are interpolated the configuration will be like this:
+
+```json
+{
+  "package": "example-virtualenv",
+  "directories": [
+    {
+      "source": "build/virtualenvs/example-virtualenv",
+      "destination": "/var/virtualenvs/example-virtualenv"
+    }
+  ]
+}
+```
+
+Variable resolution order is `variables`, then `environment_variables`, then `os.environ`, i.e. a key will first be 
+looked up in `variables`, if it does note exist then `environment_variables`, and so on to `os.environ`.
+
+The `variables` values will only be used to interpolate the configuration while the `environment_variables` values will
+be exported to any sub processes being called, so in this example, `PYTHON_VERSION`, `VENV_NAME`, `VENV_DIR` and 
+`VENV_BIN_DIR` will be added to os.environ, while `BUILD_DIR` will not.
 
 
 Known Issues

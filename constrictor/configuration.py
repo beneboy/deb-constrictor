@@ -212,8 +212,8 @@ class ConstrictorConfiguration(object):
         Should be called before variables are used, when we have finished updating all configs down the hierarchy, to
         interpolate the variables with variables before they can be used.
         """
-        self.store_variable_list(ENVIRONMENT_VARIABLES_KEY, self.environment_variables)
         self.store_variable_list(VARIABLES_KEY, self.variables)
+        self.store_variable_list(ENVIRONMENT_VARIABLES_KEY, self.environment_variables)
 
     def store_variable_list(self, variables_list_key, variables_container):
         """
