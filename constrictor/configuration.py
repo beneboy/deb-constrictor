@@ -12,6 +12,7 @@ DEPENDS_KEY = "Depends"
 PROVIDES_KEY = "Provides"
 DIRECTORIES_KEY = "directories"
 LINKS_KEY = "links"
+COMMANDS_KEY = "commands"
 MAINTAINER_SCRIPTS_KEY = "maintainer_scripts"
 DIRECTORY_PATH_KEYS = ('source', 'destination')
 
@@ -69,6 +70,8 @@ def interpolate_list(l, context):
 def interpolate_dictionary(d, context):
     """Walk through dictionary and interpolate variables for each value."""
     for k, v in d.items():
+        if k == COMMANDS_KEY:  # don't interpolate commands at build time as some variables are passed in at run time
+            continue
         interpolated = interpolate_value(v, context)
         if interpolated is not None:
             d[k] = interpolated
@@ -120,6 +123,8 @@ class ConstrictorConfiguration(object):
                 self.update_ignore_paths(v)
             elif k in (VARIABLES_KEY, ENVIRONMENT_VARIABLES_KEY):
                 self.update_variables(k, v)
+            elif k == COMMANDS_KEY:
+                self.update_commands(v)
             else:
                 self.configuration[DEB_CONSTRICTOR_KEY][k] = v
 
@@ -206,6 +211,12 @@ class ConstrictorConfiguration(object):
             self.configuration[DEB_CONSTRICTOR_KEY][variables_key] = []
 
         self.configuration[DEB_CONSTRICTOR_KEY][variables_key] += new_variables
+
+    def update_commands(self, commands):
+        if COMMANDS_KEY not in self.configuration[DEB_CONSTRICTOR_KEY]:
+            self.configuration[DEB_CONSTRICTOR_KEY][COMMANDS_KEY] = {}
+
+        self.configuration[DEB_CONSTRICTOR_KEY][COMMANDS_KEY].update(commands)
 
     def interpolate_variables(self):
         """

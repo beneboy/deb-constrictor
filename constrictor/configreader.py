@@ -29,7 +29,7 @@ def resolve_base_config_path(base_config_path):
 class ConfigReader(object):
     def __init__(self, config_path, base_config_path=None):
         self.config_path = config_path
-        self.base_config_path = resolve_base_config_path(base_config_path)
+        self.base_config_path = os.path.expanduser(resolve_base_config_path(base_config_path))
 
     @staticmethod
     def read_json(path):

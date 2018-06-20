@@ -2,12 +2,43 @@
 
 from __future__ import print_function
 from sys import argv
+
+from os import environ
+from os.path import dirname
+import subprocess
+
+from constrictor.configuration import COMMANDS_KEY, interpolate_list
 from constrictor.dpkg import DPKGBuilder
 from constrictor.control import BinaryControl
 from constrictor.configreader import ConfigReader
 
 DEFAULT_CONFIG_PATH = "./build-config.json"
 DEFAULT_OUTPUT_DIRECTORY = "./build"
+WORKING_DIR_KEY = "DEB_CONSTRICTOR_WORKING_DIR"
+OUTPUT_PATH_KEY = "DEB_CONSTRICTOR_OUTPUT_PATH"
+
+
+def run_build_command(configuration, command_and_arguments):
+    environ.update(configuration.environment_variables)
+
+    interpolate_list(command_and_arguments, configuration.get_template_context())
+    # set any environment variables that might now have been computed
+    subprocess.call(command_and_arguments, shell=True)
+
+
+def run_pre_build_command(config_file_directory, configuration, command_and_arguments):
+    environ[WORKING_DIR_KEY] = config_file_directory
+    run_build_command(configuration, command_and_arguments)
+
+
+def run_post_build_command(config_file_directory, output_path, configuration, command_and_arguments):
+    environ[WORKING_DIR_KEY] = config_file_directory
+    environ[OUTPUT_PATH_KEY] = output_path
+    run_build_command(configuration, command_and_arguments)
+
+
+def get_build_command(constrictor_options, command_name):
+    return constrictor_options.get(COMMANDS_KEY, {}).get(command_name)
 
 
 def build_package(build_config_path, print_output_path):
@@ -22,6 +53,13 @@ def build_package(build_config_path, print_output_path):
 
     deb_constrictor_options = config.get("deb_constrictor", {})
 
+    pre_build_command = get_build_command(deb_constrictor_options, "prebuild")
+
+    config_file_directory = dirname(build_config_path)
+
+    if pre_build_command:
+        run_pre_build_command(config_file_directory, config, pre_build_command)
+
     d = DPKGBuilder(output_directory, control, config.get("directories"), config.get("links"),
                     config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get("ignore_paths"))
 
@@ -29,6 +67,11 @@ def build_package(build_config_path, print_output_path):
 
     if print_output_path:
         print(output_path)
+
+    post_build_command = get_build_command(deb_constrictor_options, "postbuild")
+
+    if post_build_command:
+        run_post_build_command(config_file_directory, output_path, config, post_build_command)
 
 
 def main():

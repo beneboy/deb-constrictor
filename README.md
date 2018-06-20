@@ -82,6 +82,10 @@ It loads the following fields and expects them to be in the same format as above
 * parent (string, optional, see parent section below)
 * deb_constrictor (dictionary, optional, see deb_constrictor section below). Valid keys are:
     * ignore_paths (array of string, optional)
+    * environment_variables (array of two-element arrays, optional)
+    * variables (array of two-element arrays, optional)
+    * commands (dictionary)
+    
 
 Examples of configuration files and how you might use constrictor-build in conjunction with other build steps are
 included in the examples directory.
@@ -136,11 +140,12 @@ Creating a computed configuration like this:
 
 ### deb_constrictor  ##
 
-Provide a dictionary of metadata to configure build options such as file exclusion, pre/post build actions or variables.
+Provides a dictionary of metadata to configure build options such as file exclusion, pre/post build actions or variables.
 Valid keys are:
-* ignore_paths (list of strings, optional)
-* environment_variables (list of two-element lists, optional)
-* variables (list of two-element lists, optional)
+* ignore_paths (array of strings, optional)
+* environment_variables (array of two-element arrays, optional)
+* variables (array of two-element arrays, optional)
+* commands (dictionary of arrays, optional) 
 
 #### ignore_paths ###
 
@@ -168,7 +173,7 @@ not empty) however the placeholder file will not be included.
 
 #### environment_variables, variables ###
 
-A list of two-element lists in the format [key, value]; this format is used instead of a dictionary to preserve order so
+An array of two-element arrays in the format [key, value]; this format is used instead of a dictionary to preserve order so
 that values may depend on values that have been defined earlier.
 
 `environment_variables` and `variables` both behave in the same way in that any values they define can be used to 
@@ -215,11 +220,50 @@ After the variables are interpolated the configuration will be like this:
 ```
 
 Variable resolution order is `variables`, then `environment_variables`, then `os.environ`, i.e. a key will first be 
-looked up in `variables`, if it does note exist then `environment_variables`, and so on to `os.environ`.
+looked up in `variables`, if it does not exist then `environment_variables`, and so on to `os.environ`.
 
 The `variables` values will only be used to interpolate the configuration while the `environment_variables` values will
 be exported to any sub processes being called, so in this example, `PYTHON_VERSION`, `VENV_NAME`, `VENV_DIR` and 
 `VENV_BIN_DIR` will be added to os.environ, while `BUILD_DIR` will not.
+
+#### commands ###
+
+Commands can be supplied to be run before and after building. For example, to setup a virtualenv for packaging, and to
+upload the built .deb to an apt repository afterwards.
+
+The supported keys for the commands are `prebuild` and `postbuild`, which will be called before and after (respectively)
+the DPKG being created. The commands should be supplied as an array (as would be sent to `subprocess.call`).
+
+When using parent config files, commands defined in children override those in parents (as opposed to appending).
+
+Two special variables are set (in addition to other defined variables) which are interpolated into the commands and set
+in the environment:
+
+* `DEB_CONSTRICTOR_WORKING_DIR`: the directory containing the current config file being used (e.g. for 
+_/foo/bar/build-config.json_, this value is _/foo/bar_) 
+* `DEB_CONSTRICTOR_OUTPUT_PATH`: the output path of DPKG, relative to the cwd. This variable is only set for 
+`postbuild`. This can be combined with the working dir path to get absolute path.
+
+An example of using these:
+
+```json
+{
+  "deb_constrictor": {
+    "commands": {
+      "prebuild": ["build-virtualenv.sh"],
+      "postbuild": ["scp", "${DEB_CONSTRICTOR_OUTPUT_PATH}", "apt@apt-server.example.com/srv/apt/incoming/"]
+    }
+  }
+}
+```
+
+The prebuild command `build-virtualenv.sh` has access to the `DEB_CONSTRICTOR_WORKING_DIR` environment variable (as well 
+as other `environment_variables` that have been defined) and can refer to all of these to execute tasks.
+
+This example shows that postbuild command that will be interpolated before being executed, so the actual command that is
+called might be:
+
+`scp build/example-1.0_amd64.deb apt@apt-server.example.com/srv/apt/incoming/`
 
 
 Known Issues
