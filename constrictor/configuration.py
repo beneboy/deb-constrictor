@@ -55,6 +55,8 @@ def interpolate_value(v, context):
     elif isinstance(v, list):
         interpolate_list(v, context)
         return None
+    elif isinstance(v, (bool, int, float)):
+        return None
     else:
         return Template(v).substitute(context)
 

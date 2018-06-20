@@ -265,6 +265,14 @@ called might be:
 
 `scp build/example-1.0_amd64.deb apt@apt-server.example.com/srv/apt/incoming/`
 
+#### remove_after_build ###
+
+If `True`, then the DPKG will be deleted after building, or more specifically, after the `postbuild` command has been
+run (it will be deleted even if a `postbuild` command does not exist though).
+
+This is intended to be used to clean up a DPKG that is no longer needed, for example, if the `postbuild` script sends it
+to a remote server.
+
 
 Known Issues
 ------------
