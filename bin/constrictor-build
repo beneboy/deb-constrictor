@@ -23,7 +23,10 @@ def run_build_command(configuration, command_and_arguments):
 
     interpolate_list(command_and_arguments, configuration.get_template_context())
     # set any environment variables that might now have been computed
-    subprocess.call(command_and_arguments, shell=True)
+    return_code = subprocess.call(command_and_arguments, shell=True)
+
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, command_and_arguments)
 
 
 def run_pre_build_command(config_file_directory, configuration, command_and_arguments):
