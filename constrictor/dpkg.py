@@ -17,6 +17,9 @@ DEBIAN_BINARY_VERSION = '2.0'
 TAR_DEFAULT_MODE = 0o755
 AR_DEFAULT_MODE = 0o644
 
+LINK_PATH_KEY = "path"
+LINK_TARGET_KEY = "target"
+
 
 def generate_directories(path, existing_dirs=None):
     """Recursively build a list of directories inside a path."""
@@ -120,8 +123,8 @@ class DPKGBuilder(object):
                     # this is a link to a file that doesn't exist but should when we deploy if we are on the same OS
                     # (e.g. venv build with docker and .deb assembled on host) so add it as a link
                     self.links.append({
-                        'source': archive_path,
-                        'destination': os.readlink(source_file_path)
+                        LINK_PATH_KEY: archive_path,
+                        LINK_TARGET_KEY: os.readlink(source_file_path)
                     })
                 else:
                     self.add_directory_root_to_archive(data_tar_file, dir_conf, archive_path)
@@ -135,27 +138,27 @@ class DPKGBuilder(object):
                                       filter=lambda ti: self.filter_tar_info(ti, dir_conf))
 
         for symlink_conf in self.links:
-            symlink_dest = symlink_conf['destination']
-            symlink_source = symlink_conf['source']
+            target = symlink_conf[LINK_TARGET_KEY]
+            path = symlink_conf[LINK_PATH_KEY]
 
-            if not symlink_source.startswith('.'):
-                symlink_source = '.' + symlink_source
+            if not path.startswith('.'):
+                path = '.' + path
 
-            self.add_directory_root_to_archive(data_tar_file, symlink_conf, symlink_source)
-            link_ti = self.build_link_tarinfo(symlink_conf, symlink_dest, symlink_source)
+            self.add_directory_root_to_archive(data_tar_file, symlink_conf, path)
+            link_ti = self.build_link_tarinfo(symlink_conf, target, path)
 
             data_tar_file.addfile(link_ti)
-            file_size_bytes += len(symlink_source)
+            file_size_bytes += len(path)
 
         data_tar_file.close()
 
         return file_size_bytes, file_md5s
 
-    def build_link_tarinfo(self, symlink_conf, symlink_dest, symlink_source):
+    def build_link_tarinfo(self, symlink_conf, target, path):
         link_ti = tarfile.TarInfo()
         link_ti.type = tarfile.SYMTYPE
-        link_ti.linkname = symlink_dest
-        link_ti.name = symlink_source
+        link_ti.linkname = target
+        link_ti.name = path
         link_ti.mtime = int(time.time())
         link_ti = self.filter_tar_info(link_ti, symlink_conf)
         return link_ti

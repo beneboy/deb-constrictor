@@ -34,12 +34,12 @@ maintainer_scripts = {
 
 links =  [
     {
-        'source': '/etc/nginx/sites-enabled/bbit-web-frontend',
-        'destination': '../sites-available/bbit-web-frontend'
+        'path': '/etc/nginx/sites-enabled/bbit-web-frontend',
+        'target': '../sites-available/bbit-web-frontend'
     },
     {
-        'source': '/etc/uwsgi/apps-enabled/bbit-web-frontend.ini',
-        'destination': '../apps-available/bbit-web-frontend.ini'
+        'path': '/etc/uwsgi/apps-enabled/bbit-web-frontend.ini',
+        'target': '../apps-available/bbit-web-frontend.ini'
     },
 ]
 

@@ -22,12 +22,12 @@
   ],
   "links": [
     {
-      "source": "/var/virtualenvs/${VENV_NAME}/lib/python${PYTHON_VERSION}/encodings",
-      "destination": "/usr/lib/python${PYTHON_VERSION}/encodings"
+      "path": "/var/virtualenvs/${VENV_NAME}/lib/python${PYTHON_VERSION}/encodings",
+      "target": "/usr/lib/python${PYTHON_VERSION}/encodings"
     },
     {
-      "source": "/var/virtualenvs/${VENV_NAME}/lib/python${PYTHON_VERSION}/lib-dynload",
-      "destination": "/usr/lib/python${PYTHON_VERSION}/lib-dynload"
+      "path": "/var/virtualenvs/${VENV_NAME}/lib/python${PYTHON_VERSION}/lib-dynload",
+      "target": "/usr/lib/python${PYTHON_VERSION}/lib-dynload"
     }
   ]
 }

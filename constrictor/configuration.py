@@ -2,6 +2,8 @@ from functools import partial
 from os import environ
 from string import Template
 
+from constrictor.dpkg import LINK_PATH_KEY, LINK_TARGET_KEY
+
 PARENT_KEY = "parent"
 DEB_CONSTRICTOR_KEY = "deb_constrictor"
 IGNORE_PATHS_KEY = "ignore_paths"
@@ -15,6 +17,7 @@ LINKS_KEY = "links"
 COMMANDS_KEY = "commands"
 MAINTAINER_SCRIPTS_KEY = "maintainer_scripts"
 DIRECTORY_PATH_KEYS = ('source', 'destination')
+LINK_KEYS = (LINK_PATH_KEY, LINK_TARGET_KEY)
 
 
 def ensure_trailing_slash(path):
@@ -193,7 +196,7 @@ class ConstrictorConfiguration(object):
             self.configuration[LINKS_KEY] = []
 
         for new_link in links_list:
-            self.configuration[LINKS_KEY] = list(filter(lambda link: link['source'] != new_link['source'],
+            self.configuration[LINKS_KEY] = list(filter(lambda link: link[LINK_PATH_KEY] != new_link[LINK_PATH_KEY],
                                                         self.configuration[LINKS_KEY]))
             self.configuration[LINKS_KEY].append(new_link)
 

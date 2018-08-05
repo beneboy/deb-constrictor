@@ -111,12 +111,12 @@ class TestConfiguration(unittest.TestCase):
         cc.update_configuration({
             "links": [
                 {
-                    "source": "a",
-                    "destination": "b",
+                    "path": "a",
+                    "target": "b",
                 },
                 {
-                    "source": "c",
-                    "destination": "d"
+                    "path": "c",
+                    "target": "d"
                 }
             ]
         })
@@ -124,12 +124,12 @@ class TestConfiguration(unittest.TestCase):
         cc.update_configuration({
             "links": [
                 {
-                    "source": "a",
-                    "destination": "f",
+                    "path": "a",
+                    "target": "f",
                 },
                 {
-                    "source": "b",
-                    "destination": "d"
+                    "path": "b",
+                    "target": "d"
                 }
             ]
         })
@@ -138,16 +138,16 @@ class TestConfiguration(unittest.TestCase):
 
         self.assertEqual([
             {
-                "source": "c",
-                "destination": "d"
+                "path": "c",
+                "target": "d"
             },
             {
-                "source": "a",
-                "destination": "f"
+                "path": "a",
+                "target": "f"
             },
             {
-                "source": "b",
-                "destination": "d"
+                "path": "b",
+                "target": "d"
             }
         ], links)
 
