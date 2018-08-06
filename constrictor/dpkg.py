@@ -41,7 +41,7 @@ class DPKGBuilder(object):
     """
 
     def __init__(self, output_directory, control, data_dirs, links, maintainer_scripts=None, output_name=None,
-                 ignore_paths=None):
+                 ignore_paths=None, configuration_files=None):
         self.output_directory = os.path.expanduser(output_directory)
         self.data_dirs = data_dirs or []
         self.links = links or {}
@@ -51,9 +51,18 @@ class DPKGBuilder(object):
         self.control = control
         self.output_name = output_name or control.get_default_output_name()
         self.ignore_paths = ignore_paths or []
+        self.configuration_files = configuration_files or []
+        self.actual_config_files = []
+
+    @staticmethod
+    def path_matches_glob_list(glob_list, path):
+        return any(map(partial(fnmatch.fnmatch, path), glob_list))
 
     def should_skip_path(self, path):
-        return any(map(partial(fnmatch.fnmatch, path), self.ignore_paths))
+        return self.path_matches_glob_list(self.ignore_paths, path)
+
+    def path_is_config(self, path):
+        return self.path_matches_glob_list(self.configuration_files, path)
 
     def list_data_dir(self, source_dir):
         """
@@ -137,6 +146,11 @@ class DPKGBuilder(object):
                     data_tar_file.add(source_file_path, arcname=archive_path, recursive=False,
                                       filter=lambda ti: self.filter_tar_info(ti, dir_conf))
 
+                    config_path = archive_path[1:] if archive_path.startswith(".") else archive_path
+
+                    if config_path not in self.actual_config_files and self.path_is_config(config_path):
+                        self.actual_config_files.append(config_path)
+
         for symlink_conf in self.links:
             target = symlink_conf[LINK_TARGET_KEY]
             path = symlink_conf[LINK_PATH_KEY]
@@ -205,6 +219,11 @@ class DPKGBuilder(object):
 
         md5sum_text = '\n'.join(['  '.join(md5_file_pair) for md5_file_pair in file_md5s]) + '\n'
         control_tar.addfile(*self.build_member_from_string('./md5sums', md5sum_text.encode()))
+
+        if self.actual_config_files:
+            conf_file_text = '\n'.join(self.actual_config_files) + "\n"
+            control_tar.addfile(*self.build_member_from_string('./conffiles', conf_file_text.encode()))
+
         control_tar.close()
 
     def assemble_deb_archive(self, control_archive_path, data_archive_path):

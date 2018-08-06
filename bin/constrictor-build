@@ -64,7 +64,8 @@ def build_package(build_config_path, print_output_path):
         run_pre_build_command(config_file_directory, config, pre_build_command)
 
     d = DPKGBuilder(output_directory, control, config.get("directories"), config.get("links"),
-                    config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get("ignore_paths"))
+                    config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get("ignore_paths"),
+                    configuration_files=config.get("configuration_files"))
 
     output_path = d.build_package()
 

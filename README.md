@@ -78,6 +78,7 @@ It loads the following fields and expects them to be in the same format as above
 * extra_control_fields (dictionary of standard DPKG control field pairs, optional)
 * directories (array of dictionaries as per example above, optional)
 * links (array of dictionaries as per example above, optional)
+* configuration_files (array of strings, can be paths or globs to match multiple)
 * maintainer_scripts (dictionary as per example above, optional)
 * parent (string, optional, see parent section below)
 * deb_constrictor (dictionary, optional, see deb_constrictor section below). Valid keys are:
@@ -278,6 +279,5 @@ Known Issues
 ------------
 
 - Can only make Binary packages
-- Can't mark files as "config"
 - As with any tar based archive, ownership of files based on uname/gname can be wrong if the user does not exist. Use
     with caution or create postinst scripts to fix.

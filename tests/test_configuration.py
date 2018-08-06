@@ -173,3 +173,16 @@ class TestConfiguration(unittest.TestCase):
             "preinst": "preinst2",
             "prerm": "prerm1"
         }, cc['maintainer_scripts'])
+
+    def test_update_config_files(self):
+        cc = ConstrictorConfiguration({})
+
+        cc.update_configuration({
+            "configuration_files": ["a", "b"]
+        })
+
+        cc.update_configuration({
+            "configuration_files": ["b", "c"]
+        })
+
+        self.assertEqual(["a", "b", "c"], cc['configuration_files'])

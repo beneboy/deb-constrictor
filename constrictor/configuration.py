@@ -16,8 +16,8 @@ DIRECTORIES_KEY = "directories"
 LINKS_KEY = "links"
 COMMANDS_KEY = "commands"
 MAINTAINER_SCRIPTS_KEY = "maintainer_scripts"
+CONFIG_FILES_KEY = "configuration_files"
 DIRECTORY_PATH_KEYS = ('source', 'destination')
-LINK_KEYS = (LINK_PATH_KEY, LINK_TARGET_KEY)
 
 
 def ensure_trailing_slash(path):
@@ -112,6 +112,8 @@ class ConstrictorConfiguration(object):
                 self.update_link_entries(v)
             elif k == MAINTAINER_SCRIPTS_KEY:
                 self.update_maintainer_scripts(v)
+            elif k == CONFIG_FILES_KEY:
+                self.update_configuration_files(v)
             else:
                 self.configuration[k] = v
 
@@ -206,6 +208,14 @@ class ConstrictorConfiguration(object):
             self.configuration[MAINTAINER_SCRIPTS_KEY] = {}
 
         self.configuration[MAINTAINER_SCRIPTS_KEY].update(maintainer_scripts)
+
+    def update_configuration_files(self, configuration_files):
+        """Append configuration files to existing."""
+        if CONFIG_FILES_KEY not in self.configuration:
+            self.configuration[CONFIG_FILES_KEY] = []
+
+        self.configuration[CONFIG_FILES_KEY] += list(
+            filter(lambda path: path not in self.configuration[CONFIG_FILES_KEY], configuration_files))
 
     def update_variables(self, variables_key, new_variables):
         """
