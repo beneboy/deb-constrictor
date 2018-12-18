@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+
+import pprint
 from sys import argv
 
 from os import environ, unlink
@@ -44,8 +46,12 @@ def get_build_command(constrictor_options, command_name):
     return constrictor_options.get(COMMANDS_KEY, {}).get(command_name)
 
 
-def build_package(build_config_path, print_output_path):
+def build_package(build_config_path, print_output_path, print_computed_config):
     config = ConfigReader(build_config_path).get_configuration()
+
+    if print_computed_config:
+        pprint.pprint(config.configuration)
+        return
 
     output_directory = DEFAULT_OUTPUT_DIRECTORY
 
@@ -90,7 +96,14 @@ def main():
     else:
         print_output_path = False
 
-    build_package(args[1] if len(argv) > 1 else DEFAULT_CONFIG_PATH, print_output_path)
+    if "-c" in args:
+        # print computed output and exit
+        print_computed_config = True
+        args.remove("-c")
+    else:
+        print_computed_config = False
+
+    build_package(args[1] if len(argv) > 1 else DEFAULT_CONFIG_PATH, print_output_path, print_computed_config)
 
 
 if __name__ == "__main__":

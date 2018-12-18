@@ -29,7 +29,7 @@ def resolve_base_config_path(base_config_path):
 class ConfigReader(object):
     def __init__(self, config_path, base_config_path=None):
         self.config_path = config_path
-        self.base_config_path = os.path.expanduser(resolve_base_config_path(base_config_path))
+        self.base_config_path = os.path.realpath(os.path.expanduser(resolve_base_config_path(base_config_path)))
 
     @staticmethod
     def read_json(path):
@@ -54,24 +54,29 @@ class ConfigReader(object):
         resolved_configuration = ConstrictorConfiguration(self.load_base_config())
 
         configuration_list = []
-        seen_paths = []
+        seen_paths = set()
 
-        current_config_path = self.config_path
+        current_config_paths = [self.config_path]
 
-        while True:
+        while len(current_config_paths):
+            current_config_path = os.path.realpath(current_config_paths.pop(0))
             if current_config_path in seen_paths:
-                raise RuntimeError("{} already loaded, possible recursive config parents.".format(current_config_path))
-
-            relative_parent_config_path, configuration = self.load_config_file(current_config_path)
+                raise RuntimeError(
+                    "{} already loaded, possible recursive config parents.".format(current_config_paths))
+            relative_parent_config_paths, configuration = self.load_config_file(current_config_path)
 
             configuration_list.insert(0, configuration)
 
-            if relative_parent_config_path is None:
-                break
+            seen_paths.add(current_config_path)
 
-            seen_paths.append(current_config_path)
+            if relative_parent_config_paths is not None:
+                if not isinstance(relative_parent_config_paths, list):
+                    relative_parent_config_paths = [relative_parent_config_paths]
 
-            current_config_path = os.path.join(os.path.dirname(current_config_path), relative_parent_config_path)
+                for relative_parent_config_path in relative_parent_config_paths:
+                    absolute_parent_config_path = os.path.join(os.path.dirname(current_config_path),
+                                                               os.path.expanduser(relative_parent_config_path))
+                    current_config_paths.append(absolute_parent_config_path)
 
         for configuration in configuration_list:
             resolved_configuration.update_configuration(configuration)
