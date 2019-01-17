@@ -76,7 +76,7 @@ class ConfigReader(object):
                 for relative_parent_config_path in relative_parent_config_paths:
                     absolute_parent_config_path = os.path.join(os.path.dirname(current_config_path),
                                                                os.path.expanduser(relative_parent_config_path))
-                    current_config_paths.append(absolute_parent_config_path)
+                    current_config_paths.insert(0, absolute_parent_config_path)
 
         for configuration in configuration_list:
             resolved_configuration.update_configuration(configuration)
