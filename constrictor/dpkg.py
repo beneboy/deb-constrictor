@@ -227,6 +227,9 @@ class DPKGBuilder(object):
         control_tar.close()
 
     def assemble_deb_archive(self, control_archive_path, data_archive_path):
+        if not os.path.exists(self.output_directory):
+            os.makedirs(self.output_directory)
+
         pkg_path = os.path.join(self.output_directory, self.output_name)
 
         ar_writer = ARWriter(pkg_path)
