@@ -9,7 +9,17 @@ from os import environ, unlink
 from os.path import dirname
 import subprocess
 
-from constrictor.configuration import COMMANDS_KEY, interpolate_list
+from constrictor.configuration import (
+    COMMANDS_KEY,
+    interpolate_list,
+    IGNORE_PATHS_KEY,
+    DEB_CONSTRICTOR_KEY,
+    DIRECTORIES_KEY,
+    LINKS_KEY,
+    EXTRA_CONTROL_FIELDS_KEY,
+    MAINTAINER_SCRIPTS_KEY,
+    CONFIG_FILES_KEY,
+)
 from constrictor.dpkg import DPKGBuilder
 from constrictor.control import BinaryControl
 from constrictor.configreader import ConfigReader
@@ -36,7 +46,9 @@ def run_pre_build_command(config_file_directory, configuration, command_and_argu
     run_build_command(configuration, command_and_arguments)
 
 
-def run_post_build_command(config_file_directory, output_path, configuration, command_and_arguments):
+def run_post_build_command(
+    config_file_directory, output_path, configuration, command_and_arguments
+):
     environ[WORKING_DIR_KEY] = config_file_directory
     environ[OUTPUT_PATH_KEY] = output_path
     run_build_command(configuration, command_and_arguments)
@@ -55,12 +67,17 @@ def build_package(build_config_path, print_output_path, print_computed_config):
 
     output_directory = DEFAULT_OUTPUT_DIRECTORY
 
-    control = BinaryControl(config["package"], config["version"], config["architecture"], config["maintainer"],
-                            config["description"])
+    control = BinaryControl(
+        config["package"],
+        config["version"],
+        config["architecture"],
+        config["maintainer"],
+        config["description"],
+    )
 
-    control.set_control_fields(config.get("extra_control_fields", {}))
+    control.set_control_fields(config.get(EXTRA_CONTROL_FIELDS_KEY, {}))
 
-    deb_constrictor_options = config.get("deb_constrictor", {})
+    deb_constrictor_options = config.get(DEB_CONSTRICTOR_KEY, {})
 
     pre_build_command = get_build_command(deb_constrictor_options, "prebuild")
 
@@ -69,9 +86,15 @@ def build_package(build_config_path, print_output_path, print_computed_config):
     if pre_build_command:
         run_pre_build_command(config_file_directory, config, pre_build_command)
 
-    d = DPKGBuilder(output_directory, control, config.get("directories"), config.get("links"),
-                    config.get("maintainer_scripts"), ignore_paths=deb_constrictor_options.get("ignore_paths"),
-                    configuration_files=config.get("configuration_files"))
+    d = DPKGBuilder(
+        output_directory,
+        control,
+        config.get(DIRECTORIES_KEY),
+        config.get(LINKS_KEY),
+        config.get(MAINTAINER_SCRIPTS_KEY),
+        ignore_paths=deb_constrictor_options.get(IGNORE_PATHS_KEY),
+        configuration_files=config.get(CONFIG_FILES_KEY),
+    )
 
     output_path = d.build_package()
 
@@ -81,9 +104,11 @@ def build_package(build_config_path, print_output_path, print_computed_config):
     post_build_command = get_build_command(deb_constrictor_options, "postbuild")
 
     if post_build_command:
-        run_post_build_command(config_file_directory, output_path, config, post_build_command)
+        run_post_build_command(
+            config_file_directory, output_path, config, post_build_command
+        )
 
-    if deb_constrictor_options.get('remove_after_build') is True:
+    if deb_constrictor_options.get("remove_after_build") is True:
         unlink(output_path)
 
 
@@ -103,7 +128,11 @@ def main():
     else:
         print_computed_config = False
 
-    build_package(args[1] if len(argv) > 1 else DEFAULT_CONFIG_PATH, print_output_path, print_computed_config)
+    build_package(
+        args[1] if len(argv) > 1 else DEFAULT_CONFIG_PATH,
+        print_output_path,
+        print_computed_config,
+    )
 
 
 if __name__ == "__main__":

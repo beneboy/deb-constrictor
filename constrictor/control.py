@@ -92,7 +92,7 @@ class BinaryControl(object):
         if self.installed_size_bytes is None:
             return None
 
-        return '{}: {}'.format(FIELD_INSTALLED_SIZE, math.ceil(self.installed_size_bytes / 1024.0))
+        return '{}: {}'.format(FIELD_INSTALLED_SIZE, int(math.ceil(self.installed_size_bytes / 1024.0)))
 
     def get_control_text(self):
         control_lines = []

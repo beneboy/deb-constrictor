@@ -2,7 +2,7 @@ from functools import partial
 from os import environ
 from string import Template
 
-from constrictor.dpkg import LINK_PATH_KEY, LINK_TARGET_KEY
+from constrictor.dpkg import LINK_PATH_KEY
 
 PARENT_KEY = "parent"
 DEB_CONSTRICTOR_KEY = "deb_constrictor"
@@ -64,12 +64,12 @@ def interpolate_value(v, context):
         return Template(v).substitute(context)
 
 
-def interpolate_list(l, context):
+def interpolate_list(list_, context):
     """Walk through list and interpolate variables for each value."""
-    for i, v in enumerate(l):
+    for i, v in enumerate(list_):
         interpolated = interpolate_value(v, context)
         if interpolated is not None:
-            l[i] = interpolated
+            list_[i] = interpolated
 
 
 def interpolate_dictionary(d, context):

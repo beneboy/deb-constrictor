@@ -56,7 +56,8 @@ class DPKGBuilder(object):
 
     @staticmethod
     def path_matches_glob_list(glob_list, path):
-        return any(map(partial(fnmatch.fnmatch, path), glob_list))
+        path_matcher = partial(fnmatch.fnmatch, path)
+        return any(map(path_matcher, glob_list))
 
     def should_skip_path(self, path):
         return self.path_matches_glob_list(self.ignore_paths, path)

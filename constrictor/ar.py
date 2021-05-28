@@ -33,7 +33,7 @@ class ARWriter(object):
         file_header = '{: <16}{: <12}{: <6}{: <6}{: <8}{: <10}`\n'.format(file_name, mod_timestamp, uid, gid,
                                                                           mode_string, file_size)
 
-        self.fp.write(file_header.encode())
+        self.fp.write(file_header.encode('ascii'))
 
     def _write_file_content(self, source_path):
         source_file = open(source_path, 'rb')
