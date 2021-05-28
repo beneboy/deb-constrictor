@@ -89,7 +89,7 @@ It loads the following fields and expects them to be in the same format as above
     
 
 Examples of configuration files and how you might use constrictor-build in conjunction with other build steps are
-included in the examples directory.
+included in the `examples` directory.
 
 Environment variables in the form ${var_name} or $var_name will be substituted.
 
@@ -97,7 +97,7 @@ Environment variables in the form ${var_name} or $var_name will be substituted.
 
 You can also provide a "parent" field, which is a path to another build JSON file (path is relative to the config file)
 from which to read config values. For example, you might want to define the sections only in a parent config rather
-than in each child config. The parent lookup is recursive so a parent can have a parent, and so on. constrictor-build
+than in each child config. The parent lookup is recursive, so a parent can have a parent, and so on. constrictor-build
 also attempts to load a base configuration file as the root of the configuration tree. The default location of this file
 is *~/constrictor-build-config.json*, but can be overridden by setting the *CONSTRICTOR_BUILD_BASE_CONFIG_PATH*
 environment variable.
@@ -151,7 +151,7 @@ Valid keys are:
 #### ignore_paths ###
 
 List of glob patterns of files to exclude when assembling data tar. Files are compared with their name relative to the
-include dir, and have a leading slash.
+included directory, and have a leading slash.
 
 For example, on the file system, you have directory layout like so:
 
@@ -240,9 +240,9 @@ When using parent config files, commands defined in children override those in p
 Two special variables are set (in addition to other defined variables) which are interpolated into the commands and set
 in the environment:
 
-* `DEB_CONSTRICTOR_WORKING_DIR`: the directory containing the current config file being used (e.g. for 
+- `DEB_CONSTRICTOR_WORKING_DIR`: the directory containing the current config file being used (e.g. for 
 _/foo/bar/build-config.json_, this value is _/foo/bar_) 
-* `DEB_CONSTRICTOR_OUTPUT_PATH`: the output path of DPKG, relative to the cwd. This variable is only set for 
+- `DEB_CONSTRICTOR_OUTPUT_PATH`: the output path of DPKG, relative to the cwd. This variable is only set for 
 `postbuild`. This can be combined with the working dir path to get absolute path.
 
 An example of using these:
