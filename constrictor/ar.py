@@ -1,5 +1,6 @@
 import os
 import os.path
+from shutil import copyfileobj
 
 from .helpers import READ_BUFFER_SIZE
 
@@ -7,20 +8,18 @@ AR_HEADER_TEXT = "!<arch>\n"
 
 
 class ARWriter(object):
-    def __init__(self, archive_path):
-        self.archive_path = archive_path
+    def __init__(self, fp):
         self.archive_ready = False
-        self.fp = None
+        self.fp = fp
 
     def write_header(self):
         if not self.archive_ready:
             raise RuntimeError("Archive not yet created.")
-        self.fp.write(AR_HEADER_TEXT.encode())
+        self.fp.write(AR_HEADER_TEXT.encode("ascii"))
 
     def create_archive(self):
         if self.archive_ready:
             raise RuntimeError("Archive has already been created.")
-        self.fp = open(self.archive_path, 'wb')
         self.archive_ready = True
         self.write_header()
 
@@ -36,21 +35,15 @@ class ARWriter(object):
         self.fp.write(file_header.encode('ascii'))
 
     def _write_file_content(self, source_path):
-        source_file = open(source_path, 'rb')
-
-        while True:
-            data = source_file.read(READ_BUFFER_SIZE)
-            if not data:
-                break
-            self.fp.write(data)
-        source_file.close()
+        with open(source_path, 'rb') as source_file:
+            copyfileobj(source_file, self.fp)
 
     def _write_file_alignment(self):
         """ar files are aligned to 2n bytes, this will write an extra byte to make sure they line up."""
-        self.fp.write("\n".encode())
+        self.fp.write("\n".encode("ascii"))
 
     def _write_text(self, text):
-        self.fp.write(text.encode())
+        self.fp.write(text.encode("ascii"))
 
     def archive_file(self, file_path, mod_time_override=None, uid_override=None, gid_override=None, mode_override=None):
         if not self.archive_ready:
@@ -78,7 +71,3 @@ class ARWriter(object):
 
         if file_size % 2 != 0:
             self._write_file_alignment()
-
-    def close(self):
-        self.fp.close()
-        self.archive_ready = False

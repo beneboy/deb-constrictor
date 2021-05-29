@@ -114,9 +114,14 @@ class DPKGBuilder(object):
     def data_archive_path(self):
         return os.path.join(self.working_dir, 'data.tar.gz')
 
-    def build_data_archive(self):
-        data_tar_file = tarfile.open(self.data_archive_path, 'w:gz')
+    @staticmethod
+    def open_tar_file(path):
+        tf = tarfile.open(path, 'w:gz')
+        tf.format = tarfile.USTAR_FORMAT
+        return tf
 
+    def build_data_archive(self):
+        data_tar_file = self.open_tar_file(self.data_archive_path)
         file_size_bytes = 0
 
         file_md5s = []
@@ -211,7 +216,7 @@ class DPKGBuilder(object):
         maintainer_scripts = maintainer_scripts or {}
         self.validate_maintainer_scripts(maintainer_scripts)
 
-        control_tar = tarfile.open(self.control_archive_path, 'w:gz')
+        control_tar = self.open_tar_file(self.control_archive_path)
 
         for script_name, script_path in maintainer_scripts.items():
             control_tar.add(script_path, arcname=script_name, filter=self.filter_maintainer_script_tar_info)
@@ -233,13 +238,13 @@ class DPKGBuilder(object):
 
         pkg_path = os.path.join(self.output_directory, self.output_name)
 
-        ar_writer = ARWriter(pkg_path)
+        with open(pkg_path, 'wb') as ar_fp:
+            ar_writer = ARWriter(ar_fp)
 
-        ar_writer.archive_text("debian-binary", "{}\n".format(DEBIAN_BINARY_VERSION), int(time.time()), 0, 0,
-                               AR_DEFAULT_MODE)
-        ar_writer.archive_file(control_archive_path, int(time.time()), 0, 0, AR_DEFAULT_MODE)
-        ar_writer.archive_file(data_archive_path, int(time.time()), 0, 0, AR_DEFAULT_MODE)
-        ar_writer.close()
+            ar_writer.archive_text("debian-binary", "{}\n".format(DEBIAN_BINARY_VERSION), int(time.time()), 0, 0,
+                                   AR_DEFAULT_MODE)
+            ar_writer.archive_file(control_archive_path, int(time.time()), 0, 0, AR_DEFAULT_MODE)
+            ar_writer.archive_file(data_archive_path, int(time.time()), 0, 0, AR_DEFAULT_MODE)
 
         return pkg_path
 
